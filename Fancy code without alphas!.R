@@ -1,7 +1,6 @@
 
 
 
-
 f.lr.p <- function(X, beta) {
   # compute vector p of probabilities for logistic regression with logit link
   X <- as.matrix(X)
