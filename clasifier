@@ -2,6 +2,7 @@
 # Logistic regression training #
 ################################
 
+#### Setting up data ####
 spam <- read.csv("~/ST903/spambase/spambase.data", header=FALSE)
 
 # V58 is y
@@ -15,3 +16,36 @@ library(ggplot2)
 test <- spam[-smp_size,]
 test <- test[1:1000,]
 Status.test = spam[smp_size, "response"]
+
+#####################
+# Fitting the model #
+#####################
+
+## Data Preparation ##
+
+# dependent variable - vector of 3000
+y <- train$V58
+n <- nrow(train)
+
+# matix of covariates
+X <- train[1:57]
+# add a column of ones for an intercept
+Int <- rep(1, 3000)
+X$Int <- Int
+# the algorithm needs a matrix
+X_mat <- as.matrix(sapply(X, as.numeric))
+
+# m = 1 in this case. 1x3000 vector of ones
+m <- rep(1, 3000)
+
+# number of regression coefficients - excluding intercept
+r <- ncol(X) - 1 
+# defining initial beta guesses - as found in literature
+beta_new <- c(log(sum(y) / sum(m - y)), rep(0, r))
+
+Fisher_scoring(X=X_mat, y, m, beta_new, maxiter=50, delta.beta = 0.0001)
+
+#Gives the same results but converges faster - can be due to some alpha steps
+glm.fit <- glm( y~X_mat, family = binomial)
+summary(glm.fit)
+
