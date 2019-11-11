@@ -1,0 +1,17 @@
+################################
+# Logistic regression training #
+################################
+
+spam <- read.csv("~/ST903/spambase/spambase.data", header=FALSE)
+
+# V58 is y
+summary(spam)
+# data documentation says no missing values
+
+smp_size <- sample(nrow(spam), 3000)
+train <- spam[smp_size,]
+
+library(ggplot2)
+test <- spam[-smp_size,]
+test <- test[1:1000,]
+Status.test = spam[smp_size, "response"]
