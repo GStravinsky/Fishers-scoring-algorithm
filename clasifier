@@ -64,15 +64,26 @@ X_test <- as.matrix(sapply(X_test, as.numeric))
 test_pred <- logistic(X_test, beta.MLE)
 
 # Need to find proportions
-length(test_pred[test_pred<0.5])
-# 455
-length(test_pred[test_pred>=0.5])
-# 545
+length(test_pred[test_pred<=0.5])
+# 419
+length(test_pred[test_pred>0.5])
+# 581
 
 y_test <- test$V58
-y_test <- factor(y_test)
-summary(y_test)
+y_test_f <- factor(y_test)
+summary(y_test_f)
 # non-spam - 391, spam - 609
-# so 455-391 = 64 emails were falsly classified as spam. and 609 - 545 = 64 emails too were classified as non-spam even if they were spam
+# so 455-391 = 28 emails were falsly classified as spam. and 609 - 545 = 28 emails too were classified as non-spam even if they were spam
 # both cases correspond to type 2 and type 1 error respectativelly . 10-14% error. 
-#
+
+compare <- data.frame(y_test)
+compare$probability <- test_pred
+compare$yhat <- cut(compare$probability,  breaks=c(0, 0.5, 1),  labels=c(0, 1))
+compare$hat <- as.numeric(as.character(compare$yhat))
+compare$error <- compare$y_test - compare$hat
+
+mean(compare$probability[compare$error!=0])
+# 37%
+mean(compare$probability[compare$error==1])
+mean(compare$probability[compare$error==-1])
+
