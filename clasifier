@@ -4,11 +4,13 @@
 
 #### Setting up data ####
 spam <- read.csv("~/ST903/spambase/spambase.data", header=FALSE)
+# Load data call it "spam"
 
 # V58 is y
 summary(spam)
 # data documentation says no missing values
 
+set.seed(1620789)
 smp_size <- sample(nrow(spam), 3000)
 train <- spam[smp_size,]
 
@@ -20,10 +22,7 @@ Status.test = spam[smp_size, "response"]
 #####################
 # Fitting the model #
 #####################
-
-# Prepare the data
-
-# dependent variable - vector of 3000
+ dependent variable - vector of 3000
 y <- train$V58
 
 n <- nrow(train)
@@ -32,26 +31,29 @@ X <- train[1:57]
 # add a column of ones for an intercept
 Int <- rep(1, 3000)
 X$Int <- Int
-X_mat <- as.matrix(sapply(X, as.numeric))
+X<- as.matrix(sapply(X, as.numeric))
 
-
-# m = 1 in this case. 1x3000 vector of ones
+# m = 1 in this case. 1x3000 vector of ones. 
 m <- rep(1, 3000)
 
+# number of regression coefficients - intercept
+r <- ncol(X) - 1 
 # defining initial beta guesses
-r <- ncol(X) - 1 # number of regression coefficients - 1
 beta_new <- c(log(sum(y) / sum(m - y)), rep(0, r))
 
-classifier <- Fisher_scoring(X=X_mat, y, m, beta_new, maxiter=50, delta.beta = 0.0001)
+# Fisher scoring function fron another code in this repository.
+classifier <- classifier <- Fisher_scoring(X, y, m, beta_new, maxiter=50,
+delta.betas = 0.5)
+classifier
 
-#Gives the same results but converges faster - can be due to some alpha steps
-glm.fit <- glm( y~X_mat, family = binomial)
-summary(glm.fit)
+true.fit <- glm( y~X, family = binomial)
+summary(true.fit)
+#Gives the same results but converges faster
 
-#########################
-# Predicting the class #
-########################
-
+#####################################################
+# Predicting the class and analysing the efficiency #
+#####################################################
+ 
 # extracting MLE coefficients - 1x58 matrix
 beta.MLE <- classifier$beta.MLE
 
@@ -61,29 +63,31 @@ Int <- rep(1, 1000)
 X_test$Int <- Int
 X_test <- as.matrix(sapply(X_test, as.numeric))
 
+#logistic function from another code in this repostory
 test_pred <- logistic(X_test, beta.MLE)
 
-# Need to find proportions
-length(test_pred[test_pred<=0.5])
-# 419
-length(test_pred[test_pred>0.5])
-# 581
+# Results
+length(test_pred[test_pred<0.5])
+# 425
+length(test_pred[test_pred>=0.5])
+# 575
 
 y_test <- test$V58
 y_test_f <- factor(y_test)
 summary(y_test_f)
-# non-spam - 391, spam - 609
-# so 455-391 = 28 emails were falsly classified as spam. and 609 - 545 = 28 emails too were classified as non-spam even if they were spam
-# both cases correspond to type 2 and type 1 error respectativelly . 10-14% error. 
+# non-spam - 365, spam - 635
 
 compare <- data.frame(y_test)
 compare$probability <- test_pred
-compare$yhat <- cut(compare$probability,  breaks=c(0, 0.5, 1),  labels=c(0, 1))
+compare$yhat <- cut(compare$probability, breaks=c(0, 0.5, 1), labels=c(0, 1))
 compare$hat <- as.numeric(as.character(compare$yhat))
 compare$error <- compare$y_test - compare$hat
 
-mean(compare$probability[compare$error!=0])
-# 37%
-mean(compare$probability[compare$error==1])
-mean(compare$probability[compare$error==-1])
+length(compare$error[compare$error!=0])
+# 85
+length(compare$error[compare$error==1])
+# 68
+length(compare$error[compare$error==-1])
+# 18
+
 
